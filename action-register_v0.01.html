@@ -5,7 +5,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600&amp;display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Titillium Web', sans-serif;
             margin: 20px;
             line-height: 1.6;
         }
@@ -15,6 +15,9 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
+            background-color: #FFFF00;  /* Excel color index 6 - bright yellow */
+            padding: 20px;
+            margin: -20px -20px 20px -20px; /* Negative margin to counteract body padding */
         }
 
         .stats {
@@ -58,6 +61,12 @@
             background-color: #FFFF00;  /* Excel color index 6 - bright yellow */
         }
 
+        /* Ensure priority row stays highlighted even when closed */
+        .priority-row.closed-row {
+            background-color: #FFFF00;
+            color: #999;
+        }
+
         .closed-row {
             color: #999;
         }
@@ -74,10 +83,12 @@
 
         .add-row {
             margin-top: 10px;
+            margin-bottom: 30px;
             padding: 8px;
             background: #f8f9fa;
             text-align: center;
             cursor: pointer;
+            font-style: italic;
         }
 
         .save-btn {
@@ -101,6 +112,10 @@
             cursor: pointer;
             font-size: 1.2em;
             padding: 2px 6px;
+            display: block;
+            margin: 0 auto;
+            text-align: center;
+            width: fit-content;
         }
 
         .delete-btn:hover {
@@ -158,10 +173,146 @@
         /* Add new title styles */
         .header h1 {
             font-family: 'Titillium Web', sans-serif;
-            background-color: #FFFF00;  /* Excel color index 6 - bright yellow */
+            padding: 0;
+            margin: 0;
+            background-color: transparent;  /* Remove the yellow background */
+        }
+
+        .section-header {
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: space-between;
+        }
+
+        .section-title {
+            outline: none;
+            border: none;
+            background: none;
+            font-size: inherit;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+
+        .section-title:hover {
+            background: #f0f0f0;
+        }
+
+        .section-title:focus {
+            background: #fff;
+            border: 1px solid #ccc;
+        }
+
+        /* Add these styles to your existing CSS */
+        .section-stats {
+            display: flex;
+            gap: 10px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .section-stat {
+            padding: 2px 8px;
+            border-radius: 3px;
+            background: #f5f5f5;
+        }
+
+        /* Add styles for the "Add New" option */
+        option[value="add-new"] {
+            font-style: italic;
+            color: #666;
+        }
+
+        /* Add to your existing CSS */
+        .context-menu {
+            position: absolute;
+            background: white;
+            border: 1px solid #ccc;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            padding: 5px 0;
+            z-index: 1000;
+        }
+
+        .context-menu-item {
+            padding: 5px 20px;
+            cursor: pointer;
+        }
+
+        .context-menu-item:hover {
+            background-color: #f0f0f0;
+        }
+
+        /* Add to your existing CSS */
+        .sort-header {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .sort-header:hover {
+            background-color: #e9e9e9;
+        }
+
+        .sort-header.sorted::after {
+            content: ' ↓';
+            color: #666;
+        }
+
+        /* Center dropdowns and delete button */
+        td select, 
+        td .delete-btn {
+            display: block;
+            margin: 0 auto;
+            text-align: center;
+            width: fit-content;
+        }
+
+        /* Tighten date and number columns */
+        td:first-child, /* Number column */
+        td:nth-child(5), /* Date Raised */
+        td:nth-child(9) { /* Date Closed */
+            padding: 4px;
+            width: 1%;
+            white-space: nowrap;
+        }
+
+        /* Center delete button content */
+        td:last-child {
+            text-align: center;
+        }
+
+        /* Update status dropdown text */
+        select option[value="Priority"] {
+            text-transform: uppercase;
+        }
+
+        /* Add to your existing CSS */
+        .section-controls {
+            display: flex;
+            justify-content: space-between;
+            margin: 30px 0;
+        }
+
+        .add-section-btn, .delete-section-btn {
             padding: 10px 20px;
             border-radius: 4px;
-            margin: 0;
+            cursor: pointer;
+            font-family: 'Titillium Web', sans-serif;
+        }
+
+        .add-section-btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+        }
+
+        .delete-section-btn {
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            float: right;
+            margin-left: 10px;
         }
     </style>
 </head>
@@ -169,16 +320,150 @@
     <div class="header">
         <h1>Design Action Register</h1>
         <div class="stats">
-            <div class="stat-box" id="priority-count">Priority Items: 1</div>
-            <div class="stat-box" id="open-count">Open Items: 3</div>
+            <div class="stat-box" id="priority-count">Priority Items: 3</div>
+            <div class="stat-box" id="open-count">Open Items: 6</div>
             <button onclick="saveRegister()" class="save-btn">Save Register</button>
         </div>
     </div>
 
     <div id="register-container">
-        <!-- Sample section -->
+        <!-- Section 1 -->
         <div class="section">
-            <div class="toggle-btn" onclick="toggleSection(this)">▼ Client</div>
+            <div class="section-header">
+                <span class="toggle-btn" onclick="toggleSection(this.parentElement.parentElement)">▼</span>
+                <input type="text" class="section-title" value="Section 1">
+                <div class="section-stats">
+                    <span class="section-stat section-priority">Priority: 1</span>
+                    <span class="section-stat section-open">Open: 2</span>
+                </div>
+            </div>
+            <table style="">
+                <thead>
+                    <tr>
+                        <th>Number</th>
+                        <th>Description</th>
+                        <th>Action</th>
+                        <th>Responsible</th>
+                        <th>Date Raised</th>
+                        <th>Status</th>
+                        <th>Move</th>
+                        <th>Notes</th>
+                        <th>Date Closed</th>
+                        <th>Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="priority-row">
+                        <td>2</td>
+                        <td contenteditable="true">Test line item 2</td>
+                        <td contenteditable="true">Still open and priority item</td>
+                        <td>
+                            <select onchange="updateResponsible(this)">
+                                <option selected="selected">Client</option>
+                                <option>PM</option>
+                                <option>Architect</option>
+                                <option>Engineer</option>
+                                <option>Civils</option>
+                                <option value="add-new" style="border-top: 1px solid #ccc;">+ Add New...</option>
+                            <option value="TK">TK</option><option value="TK">TK</option></select>
+                        </td>
+                        <td>
+                            <input type="date" onchange="updateDateCell(this)" value="2025-02-23">
+                        </td>
+                        <td>
+                            <select onchange="updateStatus(this)">
+                    <option value="Open">Open</option>
+                    <option value="Closed">Closed</option>
+                    <option value="PRIORITY">PRIORITY</option>
+                </select>
+                        </td>
+                        <td>
+                            <button class="move-btn" onclick="moveRow(this, 'up')">↑</button>
+                            <button class="move-btn" onclick="moveRow(this, 'down')">↓</button>
+                        </td>
+                        <td contenteditable="true"></td>
+                        <td>
+                            <input type="date" onchange="updateDateCell(this)">
+                        </td>
+                        <td>
+                            <button class="delete-btn" onclick="deleteRow(this)">🗑️</button>
+                        </td>
+                    </tr>
+                    <tr class="">
+                        <td>3</td>
+                        <td contenteditable="true">Test line item 3</td>
+                        <td contenteditable="true">Still open item</td>
+                        <td>
+                            <select onchange="updateResponsible(this)">
+                                <option>Client</option>
+                                <option selected="selected">PM</option>
+                                <option>Architect</option>
+                                <option>Engineer</option>
+                                <option>Civils</option>
+                                <option value="add-new" style="border-top: 1px solid #ccc;">+ Add New...</option>
+                            <option value="TK">TK</option><option value="TK">TK</option></select>
+                        </td>
+                        <td>
+                            <input type="date" onchange="updateDateCell(this)" value="2025-02-23">
+                        </td>
+                        <td>
+                            <select onchange="updateStatus(this)">
+                    <option value="Open">Open</option>
+                    <option value="Closed">Closed</option>
+                    <option value="PRIORITY">PRIORITY</option>
+                </select>
+                        </td>
+                        <td>
+                            <button class="move-btn" onclick="moveRow(this, 'up')">↑</button>
+                            <button class="move-btn" onclick="moveRow(this, 'down')">↓</button>
+                        </td>
+                        <td contenteditable="true"></td>
+                        <td>
+                            <input type="date" onchange="updateDateCell(this)">
+                        </td>
+                        <td>
+                            <button class="delete-btn" onclick="deleteRow(this)">🗑️</button>
+                        </td>
+                    </tr>
+                <tr class="closed-row"><td>4</td><td contenteditable="true">Test Closed Item</td><td contenteditable="true">Now Closed</td><td>
+                <select onchange="updateResponsible(this)">
+                    <option>Client</option>
+                    <option>PM</option>
+                    <option selected="selected">Architect</option>
+                    <option>Engineer</option>
+                    <option>Civils</option>
+                    <option value="add-new" style="border-top: 1px solid #ccc;">+ Add New...</option>
+                <option value="TK">TK</option><option value="TK">TK</option></select>
+            </td><td>
+                <input type="date" value="2025-02-24" onchange="updateDateCell(this)">
+            </td><td>
+                <select onchange="updateStatus(this)">
+                    <option value="Open">Open</option>
+                    <option value="Closed">Closed</option>
+                    <option value="PRIORITY">PRIORITY</option>
+                </select>
+            </td><td>
+                <button class="move-btn" onclick="moveRow(this, 'up')">↑</button>
+                <button class="move-btn" onclick="moveRow(this, 'down')">↓</button>
+            </td><td contenteditable="true"></td><td>
+                <input type="date" onchange="updateDateCell(this)" value="2025-02-24">
+            </td><td>
+                <button class="delete-btn" onclick="deleteRow(this)">🗑️</button>
+            </td></tr></tbody>
+            </table>
+            <div class="add-row" onclick="addNewRow(this)">+ Add New Line</div>
+        </div>
+    
+        <!-- Section 2 -->
+        <div class="section">
+            <div class="section-header">
+                <span class="toggle-btn" onclick="toggleSection(this.parentElement.parentElement)">▼</span>
+                <input type="text" class="section-title" value="Section 2">
+                <div class="section-stats">
+                    <span class="section-stat section-priority">Priority: 2</span>
+                    <span class="section-stat section-open">Open: 4</span>
+                </div>
+            </div>
             <table>
                 <thead>
                     <tr>
@@ -195,80 +480,46 @@
                     </tr>
                 </thead>
                 <tbody>
-                    
-                <tr class="priority-row"><td></td><td contenteditable="true">Test line item 2</td><td contenteditable="true">Still open and priority item</td><td>
-                <select onchange="updateResponsible(this)">
-                    <option selected="selected">Client</option>
-                    <option>PM</option>
-                    <option>Architect</option>
-                    <option>Engineer</option>
-                    <option>Civils</option>
+                    <tr class="priority-row">
+                        <td>5</td>
+                        <td contenteditable="true">Section 2 test item 2</td>
+                        <td contenteditable="true">Make it a priority</td>
+                        <td>
+                            <select onchange="updateResponsible(this)">
+                                <option>Client</option>
+                                <option>PM</option>
+                                <option>Architect</option>
+                                <option selected="selected">Engineer</option>
+                                <option>Civils</option>
+                                <option value="add-new" style="border-top: 1px solid #ccc;">+ Add New...</option>
+                            <option value="TK">TK</option><option value="TK">TK</option></select>
+                        </td>
+                        <td>
+                            <input type="date" value="2025-02-24" onchange="updateDateCell(this)">
+                        </td>
+                        <td>
+                            <select onchange="updateStatus(this)">
+                    <option value="Open">Open</option>
+                    <option value="Closed">Closed</option>
+                    <option value="PRIORITY">PRIORITY</option>
                 </select>
-            </td><td>
-                <input type="date" onchange="updateDateCell(this)" value="2025-02-23">
-            </td><td>
-                <select onchange="updateStatus(this)">
-                    <option>Open</option>
-                    <option>Closed</option>
-                    <option>Priority</option>
-                </select>
-            </td><td>
-                <button class="move-btn" onclick="moveRow(this, 'up')">↑</button>
-                <button class="move-btn" onclick="moveRow(this, 'down')">↓</button>
-            </td><td contenteditable="true"></td><td>
-                <input type="date" onchange="updateDateCell(this)">
-            </td><td>
-                <button class="delete-btn" onclick="deleteRow(this)">🗑️</button>
-            </td></tr><tr class=""><td></td><td contenteditable="true">Test line item 3</td><td contenteditable="true">Still open item</td><td>
-                <select onchange="updateResponsible(this)">
-                    <option>Client</option>
-                    <option selected="selected">PM</option>
-                    <option>Architect</option>
-                    <option>Engineer</option>
-                    <option>Civils</option>
-                </select>
-            </td><td>
-                <input type="date" onchange="updateDateCell(this)" value="2025-02-23">
-            </td><td>
-                <select onchange="updateStatus(this)">
-                    <option>Open</option>
-                    <option>Closed</option>
-                    <option>Priority</option>
-                </select>
-            </td><td>
-                <button class="move-btn" onclick="moveRow(this, 'up')">↑</button>
-                <button class="move-btn" onclick="moveRow(this, 'down')">↓</button>
-            </td><td contenteditable="true"></td><td>
-                <input type="date" onchange="updateDateCell(this)">
-            </td><td>
-                <button class="delete-btn" onclick="deleteRow(this)">🗑️</button>
-            </td></tr><tr class=""><td></td><td contenteditable="true"></td><td contenteditable="true"></td><td>
-                <select onchange="updateResponsible(this)">
-                    <option>Client</option>
-                    <option selected="selected">PM</option>
-                    <option>Architect</option>
-                    <option>Engineer</option>
-                    <option>Civils</option>
-                </select>
-            </td><td>
-                <input type="date" value="2025-02-23" onchange="updateDateCell(this)">
-            </td><td>
-                <select onchange="updateStatus(this)">
-                    <option>Open</option>
-                    <option>Closed</option>
-                    <option>Priority</option>
-                </select>
-            </td><td>
-                <button class="move-btn" onclick="moveRow(this, 'up')">↑</button>
-                <button class="move-btn" onclick="moveRow(this, 'down')">↓</button>
-            </td><td contenteditable="true"></td><td>
-                <input type="date" onchange="updateDateCell(this)">
-            </td><td>
-                <button class="delete-btn" onclick="deleteRow(this)">🗑️</button>
-            </td></tr><tr class="closed-row">
-                        <td>1.1</td>
-                        <td contenteditable="true">Test line item 1</td>
-                        <td contenteditable="true">Workshop with Architect on requirements</td>
+                        </td>
+                        <td>
+                            <button class="move-btn" onclick="moveRow(this, 'up')">↑</button>
+                            <button class="move-btn" onclick="moveRow(this, 'down')">↓</button>
+                        </td>
+                        <td contenteditable="true"></td>
+                        <td>
+                            <input type="date" onchange="updateDateCell(this)">
+                        </td>
+                        <td>
+                            <button class="delete-btn" onclick="deleteRow(this)">🗑️</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>6</td>
+                        <td contenteditable="true">Section 2 test item</td>
+                        <td contenteditable="true">Open</td>
                         <td>
                             <select onchange="updateResponsible(this)">
                                 <option selected="selected">Client</option>
@@ -276,56 +527,159 @@
                                 <option>Architect</option>
                                 <option>Engineer</option>
                                 <option>Civils</option>
-                            </select>
+                                <option value="add-new" style="border-top: 1px solid #ccc;">+ Add New...</option>
+                            <option value="TK">TK</option><option value="TK">TK</option></select>
                         </td>
                         <td>
-                            <input type="date" value="2024-10-17" onchange="updateDateCell(this)">
+                            <input type="date" value="2025-02-24" onchange="updateDateCell(this)">
                         </td>
                         <td>
                             <select onchange="updateStatus(this)">
-                                <option>Open</option>
-                                <option>Closed</option>
-                                <option>Priority</option>
-                            </select>
+                    <option value="Open">Open</option>
+                    <option value="Closed">Closed</option>
+                    <option value="PRIORITY">PRIORITY</option>
+                </select>
                         </td>
                         <td>
                             <button class="move-btn" onclick="moveRow(this, 'up')">↑</button>
                             <button class="move-btn" onclick="moveRow(this, 'down')">↓</button>
                         </td>
-                        <td contenteditable="true">Notes here</td>
+                        <td contenteditable="true"></td>
                         <td>
-                            <input type="date" onchange="updateDateCell(this)" value="2025-02-23">
+                            <input type="date" onchange="updateDateCell(this)">
                         </td>
                         <td>
                             <button class="delete-btn" onclick="deleteRow(this)">🗑️</button>
                         </td>
-                    </tr></tbody>
+                    </tr>
+                <tr class="closed-row"><td>1</td><td contenteditable="true">Section 2 Deleted Test</td><td contenteditable="true"></td><td>
+                <select onchange="updateResponsible(this)">
+                    <option>Client</option>
+                    <option>PM</option>
+                    <option>Architect</option>
+                    <option>Engineer</option>
+                    <option selected="selected">Civils</option>
+                    <option value="add-new" style="border-top: 1px solid #ccc;">+ Add New...</option>
+                <option value="TK">TK</option><option value="TK">TK</option></select>
+            </td><td>
+                <input type="date" value="2025-02-03" onchange="updateDateCell(this)">
+            </td><td>
+                <select onchange="updateStatus(this)">
+                    <option value="Open">Open</option>
+                    <option value="Closed">Closed</option>
+                    <option value="PRIORITY">PRIORITY</option>
+                </select>
+            </td><td>
+                <button class="move-btn" onclick="moveRow(this, 'up')">↑</button>
+                <button class="move-btn" onclick="moveRow(this, 'down')">↓</button>
+            </td><td contenteditable="true"></td><td>
+                <input type="date" onchange="updateDateCell(this)" value="2025-02-24">
+            </td><td>
+                <button class="delete-btn" onclick="deleteRow(this)">🗑️</button>
+            </td></tr><tr><td>8</td><td contenteditable="true"></td><td contenteditable="true"></td><td>
+                <select onchange="updateResponsible(this)">
+                    <option selected="selected">Client</option>
+                    <option>PM</option>
+                    <option>Architect</option>
+                    <option>Engineer</option>
+                    <option>Civils</option>
+                    <option value="add-new" style="border-top: 1px solid #ccc;">+ Add New...</option>
+                <option value="TK">TK</option></select>
+            </td><td>
+                <input type="date" value="2025-02-24" onchange="updateDateCell(this)">
+            </td><td>
+                <select onchange="updateStatus(this)">
+                    <option value="Open">Open</option>
+                    <option value="Closed">Closed</option>
+                    <option value="PRIORITY">PRIORITY</option>
+                </select>
+            </td><td>
+                <button class="move-btn" onclick="moveRow(this, 'up')">↑</button>
+                <button class="move-btn" onclick="moveRow(this, 'down')">↓</button>
+            </td><td contenteditable="true"></td><td>
+                <input type="date" onchange="updateDateCell(this)">
+            </td><td>
+                <button class="delete-btn" onclick="deleteRow(this)">🗑️</button>
+            </td></tr><tr class="closed-row"><td>9</td><td contenteditable="true">Deleted custom party</td><td contenteditable="true">No action</td><td>
+                <select onchange="updateResponsible(this)">
+                    <option>Client</option>
+                    <option>PM</option>
+                    <option>Architect</option>
+                    <option>Engineer</option>
+                    <option>Civils</option>
+                    <option value="add-new" style="border-top: 1px solid #ccc;">+ Add New...</option>
+                <option value="TK" selected="selected">TK</option></select>
+            </td><td>
+                <input type="date" value="2025-02-24" onchange="updateDateCell(this)">
+            </td><td>
+                <select onchange="updateStatus(this)">
+                    <option value="Open">Open</option>
+                    <option value="Closed">Closed</option>
+                    <option value="PRIORITY">PRIORITY</option>
+                </select>
+            </td><td>
+                <button class="move-btn" onclick="moveRow(this, 'up')">↑</button>
+                <button class="move-btn" onclick="moveRow(this, 'down')">↓</button>
+            </td><td contenteditable="true"></td><td>
+                <input type="date" onchange="updateDateCell(this)" value="2025-02-24">
+            </td><td>
+                <button class="delete-btn" onclick="deleteRow(this)">🗑️</button>
+            </td></tr><tr class="priority-row"><td>10</td><td contenteditable="true"></td><td contenteditable="true"></td><td>
+                <select onchange="updateResponsible(this)">
+                    <option>Client</option>
+                    <option>PM</option>
+                    <option>Architect</option>
+                    <option>Engineer</option>
+                    <option selected="selected">Civils</option>
+                    <option value="add-new" style="border-top: 1px solid #ccc;">+ Add New...</option>
+                </select>
+            </td><td>
+                <input type="date" value="2025-02-24" onchange="updateDateCell(this)">
+            </td><td>
+                <select onchange="updateStatus(this)">
+                    <option value="Open" selected="">Open</option>
+                    <option value="Closed">Closed</option>
+                    <option value="PRIORITY">PRIORITY</option>
+                </select>
+            </td><td>
+                <button class="move-btn" onclick="moveRow(this, 'up')">↑</button>
+                <button class="move-btn" onclick="moveRow(this, 'down')">↓</button>
+            </td><td contenteditable="true"></td><td>
+                <input type="date" onchange="updateDateCell(this)">
+            </td><td>
+                <button class="delete-btn" onclick="deleteRow(this)">🗑️</button>
+            </td></tr></tbody>
             </table>
             <div class="add-row" onclick="addNewRow(this)">+ Add New Line</div>
         </div>
+        <div class="section-controls">
+            <button class="add-section-btn" onclick="addNewSection()">Add New Section</button>
+        </div>
     </div>
-
     <script>
-        function toggleSection(element) {
-            const table = element.nextElementSibling;
-            const isCollapsed = element.textContent.includes('▶');
-            element.textContent = isCollapsed ? '▼' + element.textContent.slice(1) : '▶' + element.textContent.slice(1);
+        function toggleSection(section) {
+            const table = section.querySelector('table');
+            const toggleBtn = section.querySelector('.toggle-btn');
+            const addRowBtn = section.querySelector('.add-row');
+            const isCollapsed = toggleBtn.textContent.includes('▶');
+            
+            toggleBtn.textContent = isCollapsed ? '▼' : '▶';
             table.style.display = isCollapsed ? '' : 'none';
+            addRowBtn.style.display = isCollapsed ? '' : 'none';
         }
 
         function updateStatus(select) {
             const row = select.closest('tr');
-            row.className = '';
+            row.className = ''; // Clear existing classes
+            
             const dateRaisedInput = row.cells[4].querySelector('input[type="date"]');
             const dateClosedInput = row.cells[8].querySelector('input[type="date"]');
-            
+
             // Update the selected option to be marked as selected
             Array.from(select.options).forEach(option => {
-                if (option.value === select.value) {
-                    option.selected = true;
-                }
+                option.selected = option.value === select.value;
             });
-            
+
             if (select.value === 'Open') {
                 if (!dateRaisedInput.value) {
                     if (confirm('Set current date as Date Raised?')) {
@@ -334,14 +688,15 @@
                     }
                 }
                 dateClosedInput.value = ''; // Clear closed date
-            } else if (select.value === 'Priority') {
-                row.classList.add('priority-row');
+            } else if (select.value === 'PRIORITY') {
+                row.classList.add('priority-row'); // Add priority highlighting
                 if (!dateRaisedInput.value) {
                     if (confirm('Set current date as Date Raised?')) {
                         dateRaisedInput.value = new Date().toISOString().split('T')[0];
                         updateDateCell(dateRaisedInput);
                     }
                 }
+                dateClosedInput.value = ''; // Clear closed date if any
             } else if (select.value === 'Closed') {
                 row.classList.add('closed-row');
                 if (dateClosedInput.value) {
@@ -357,43 +712,69 @@
             
             updateCounts();
         }
-
+        
         function updateCounts() {
             const priorityCount = document.querySelectorAll('.priority-row').length;
-            // Count all rows in tbody minus the closed ones
             const allRows = document.querySelectorAll('tbody tr').length;
             const closedRows = document.querySelectorAll('.closed-row').length;
             const openCount = allRows - closedRows;
-            
+
             document.getElementById('priority-count').textContent = `Priority Items: ${priorityCount}`;
             document.getElementById('open-count').textContent = `Open Items: ${openCount}`;
+            
+            // Update stats for each section
+            document.querySelectorAll('.section').forEach(section => {
+                updateSectionStats(section);
+            });
         }
 
+        // Update the moveRow function to allow cross-section movement
         function moveRow(button, direction) {
-            const row = button.closest('tr');
-            const sibling = direction === 'up' ? 
-                row.previousElementSibling : 
-                row.nextElementSibling;
+            // Remove sorted indicator when manually moving rows
+            document.querySelectorAll('.sort-header').forEach(h => h.classList.remove('sorted'));
             
-            if (sibling && !sibling.classList.contains('title-row')) {
-                if (direction === 'up') {
-                    sibling.before(row);
-                } else {
-                    sibling.after(row);
+            const row = button.closest('tr');
+            const currentSection = row.closest('.section');
+            const allSections = Array.from(document.querySelectorAll('.section'));
+            const currentSectionIndex = allSections.indexOf(currentSection);
+            
+            if (direction === 'up') {
+                const previousRow = row.previousElementSibling;
+                if (previousRow) {
+                    // Move within the same section
+                    row.parentNode.insertBefore(row, previousRow);
+                } else if (currentSectionIndex > 0) {
+                    // Move to previous section
+                    const previousSection = allSections[currentSectionIndex - 1];
+                    const targetTbody = previousSection.querySelector('tbody');
+                    targetTbody.appendChild(row);
+                }
+            } else {
+                const nextRow = row.nextElementSibling;
+                if (nextRow) {
+                    // Move within the same section
+                    row.parentNode.insertBefore(nextRow, row);
+                } else if (currentSectionIndex < allSections.length - 1) {
+                    // Move to next section
+                    const nextSection = allSections[currentSectionIndex + 1];
+                    const targetTbody = nextSection.querySelector('tbody');
+                    targetTbody.insertBefore(row, targetTbody.firstChild);
                 }
             }
+            
+            // Update stats for both affected sections
+            updateCounts();
         }
 
+        // Update the addNewRow function to use the modified getNextNumber
         function addNewRow(element) {
             const table = element.previousElementSibling;
             const newRow = table.insertRow(-1);
             const cells = Array(10).fill('').map(() => newRow.insertCell());
             
-            // Make description and action columns editable
-            cells[1].contentEditable = true;
-            cells[2].contentEditable = true;
-            
-            // Add responsible dropdown with default selection
+            cells[0].textContent = getNextNumber();
+            cells[1].contentEditable = true; // Description
+            cells[2].contentEditable = true; // Action
             cells[3].innerHTML = `
                 <select onchange="updateResponsible(this)">
                     <option selected>Client</option>
@@ -401,10 +782,11 @@
                     <option>Architect</option>
                     <option>Engineer</option>
                     <option>Civils</option>
+                    <option value="add-new" style="border-top: 1px solid #ccc;">+ Add New...</option>
                 </select>
             `;
             
-            // Set current date for Date Raised
+            // Date Raised (moved to index 4)
             const today = new Date().toISOString().split('T')[0];
             cells[4].innerHTML = `
                 <input type="date" 
@@ -412,28 +794,29 @@
                        onchange="updateDateCell(this)">
             `;
             
+            // Status dropdown with explicit values
             cells[5].innerHTML = `
                 <select onchange="updateStatus(this)">
-                    <option selected>Open</option>
-                    <option>Closed</option>
-                    <option>Priority</option>
+                    <option value="Open" selected>Open</option>
+                    <option value="Closed">Closed</option>
+                    <option value="PRIORITY">PRIORITY</option>
                 </select>
             `;
             
+            // Move buttons (moved to index 6)
             cells[6].innerHTML = `
                 <button class="move-btn" onclick="moveRow(this, 'up')">↑</button>
                 <button class="move-btn" onclick="moveRow(this, 'down')">↓</button>
             `;
             
-            cells[7].contentEditable = true;
+            cells[7].contentEditable = true; // Notes
             
-            // Add empty date picker for closed date
+            // Date Closed (moved to index 8)
             cells[8].innerHTML = `
                 <input type="date" 
                        onchange="updateDateCell(this)">
             `;
             
-            // Add delete button
             cells[9].innerHTML = `
                 <button class="delete-btn" onclick="deleteRow(this)">🗑️</button>
             `;
@@ -492,59 +875,329 @@
             }
         }
 
-        // Also update any existing status dropdowns in the HTML
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeStatusDropdowns();
+            initializeResponsibleDropdowns();
+            initializeRowNumbers(); // Add this line
+            updateCounts();
+            initializeSortableHeaders();
+        });
+
+        // Add new function to handle adding new responsible party
+        function addResponsibleParty(select) {
+            const newParty = prompt('Enter new responsible party name:');
+            if (newParty && newParty.trim()) {
+                // Add to all responsible dropdowns
+                document.querySelectorAll('td:nth-child(4) select').forEach(dropdown => {
+                    const option = document.createElement('option');
+                    option.value = newParty.trim();
+                    option.textContent = newParty.trim();
+                    dropdown.appendChild(option);
+                });
+                // Select the new option in the current dropdown
+                select.value = newParty.trim();
+                updateResponsible(select);
+            }
+        }
+
+        // Add new function to handle responsible dropdown changes
+        function updateResponsible(select) {
+            if (select.value === 'add-new') {
+                addResponsibleParty(select);
+                return;
+            }
+            
+            const selectedValue = select.value;
+            Array.from(select.options).forEach(option => {
+                option.removeAttribute('selected');
+            });
+            const selectedOption = Array.from(select.options).find(option => option.value === selectedValue);
+            if (selectedOption) {
+                selectedOption.setAttribute('selected', 'selected');
+            }
+        }
+
         function initializeStatusDropdowns() {
             document.querySelectorAll('select[onchange="updateStatus(this)"]').forEach(select => {
                 const row = select.closest('tr');
+                
+                // Update existing options to include explicit values
+                select.innerHTML = `
+                    <option value="Open">Open</option>
+                    <option value="Closed">Closed</option>
+                    <option value="PRIORITY">PRIORITY</option>
+                `;
+                
+                // Set the correct value based on row class
                 if (row.classList.contains('priority-row')) {
-                    select.value = 'Priority';
+                    select.value = 'PRIORITY';
                 } else if (row.classList.contains('closed-row')) {
                     select.value = 'Closed';
                 } else {
                     select.value = 'Open';
                 }
+                
+                // Update selected attribute
+                Array.from(select.options).forEach(option => {
+                    option.selected = option.value === select.value;
+                });
             });
+        }
+
+        // Add to your existing JavaScript
+        function showContextMenu(event, select) {
+            event.preventDefault();
+            
+            // Don't show context menu for default options or "Add New"
+            const defaultOptions = ['Client', 'PM', 'Architect', 'Engineer', 'Civils'];
+            if (defaultOptions.includes(select.value) || select.value === 'add-new') {
+                return;
+            }
+
+            // Remove any existing context menus
+            removeContextMenu();
+
+            // Create context menu
+            const contextMenu = document.createElement('div');
+            contextMenu.className = 'context-menu';
+            contextMenu.innerHTML = `
+                <div class="context-menu-item" onclick="deleteResponsibleParty('${select.value}')">
+                    Delete "${select.value}"
+                </div>
+            `;
+
+            // Position the context menu
+            contextMenu.style.left = event.pageX + 'px';
+            contextMenu.style.top = event.pageY + 'px';
+
+            document.body.appendChild(contextMenu);
+
+            // Close menu when clicking outside
+            document.addEventListener('click', removeContextMenu);
+        }
+
+        function removeContextMenu() {
+            const existingMenu = document.querySelector('.context-menu');
+            if (existingMenu) {
+                existingMenu.remove();
+            }
+        }
+
+        function deleteResponsibleParty(partyName) {
+            if (confirm(`Are you sure you want to delete "${partyName}" from all responsible party dropdowns?`)) {
+                document.querySelectorAll('td:nth-child(4) select').forEach(select => {
+                    const option = select.querySelector(`option[value="${partyName}"]`);
+                    if (option) {
+                        if (option.selected) {
+                            select.value = 'Client'; // Reset to default if deleted option was selected
+                        }
+                        option.remove();
+                    }
+                });
+            }
+            removeContextMenu();
         }
 
         function initializeResponsibleDropdowns() {
             document.querySelectorAll('td:nth-child(4) select').forEach(select => {
-                const currentValue = select.value;
-                // Clear all selected attributes first
+                // Add context menu listener
+                select.addEventListener('contextmenu', (e) => showContextMenu(e, select));
+                
+                // Existing initialization code
+                if (!select.querySelector('option[value="add-new"]')) {
+                    select.insertAdjacentHTML('beforeend', `
+                        <option value="add-new" style="border-top: 1px solid #ccc;">+ Add New...</option>
+                    `);
+                }
+                const selectedValue = select.value;
                 Array.from(select.options).forEach(option => {
                     option.removeAttribute('selected');
                 });
-                // Set selected attribute on the current value
-                const selectedOption = Array.from(select.options).find(option => option.value === currentValue);
+                const selectedOption = Array.from(select.options).find(option => option.value === selectedValue);
                 if (selectedOption) {
                     selectedOption.setAttribute('selected', 'selected');
                 }
             });
         }
 
-        // Update the DOMContentLoaded event listener
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeStatusDropdowns();
-            initializeResponsibleDropdowns();
-            updateCounts();
-        });
-
-        // Add new function to handle responsible dropdown changes
-        function updateResponsible(select) {
-            // Store the current selection
-            const selectedValue = select.value;
+        // Add this new function to your JavaScript
+        function updateSectionStats(section) {
+            const stats = section.querySelector('.section-stats');
+            const rows = section.querySelectorAll('tbody tr');
             
-            // Clear all selected attributes
-            Array.from(select.options).forEach(option => {
-                option.removeAttribute('selected');
+            const priorityCount = section.querySelectorAll('.priority-row').length;
+            const closedCount = section.querySelectorAll('.closed-row').length;
+            const openCount = rows.length - closedCount;
+            
+            stats.querySelector('.section-priority').textContent = `Priority: ${priorityCount}`;
+            stats.querySelector('.section-open').textContent = `Open: ${openCount}`;
+        }
+
+        // Update the getNextNumber function to look across all sections
+        function getNextNumber() {
+            const allRows = document.querySelectorAll('#register-container tbody tr');
+            let maxNumber = 0;
+            
+            allRows.forEach(row => {
+                const numCell = row.cells[0];
+                const num = parseInt(numCell.textContent);
+                if (!isNaN(num) && num > maxNumber) {
+                    maxNumber = num;
+                }
             });
             
-            // Set selected attribute on the chosen option
-            const selectedOption = Array.from(select.options).find(option => option.value === selectedValue);
-            if (selectedOption) {
-                selectedOption.setAttribute('selected', 'selected');
+            return maxNumber + 1;
+        }
+
+        // Update the initializeRowNumbers function to work across all sections
+        function initializeRowNumbers() {
+            const allRows = Array.from(document.querySelectorAll('#register-container tbody tr'));
+            let currentNumber = 1;
+            
+            // Sort all rows by date raised
+            const sortedRows = allRows.sort((a, b) => {
+                const dateA = a.cells[7].querySelector('input[type="date"]').value || '9999-12-31';
+                const dateB = b.cells[7].querySelector('input[type="date"]').value || '9999-12-31';
+                return dateA.localeCompare(dateB);
+            });
+            
+            // Assign numbers only to rows that don't have them
+            sortedRows.forEach(row => {
+                const numCell = row.cells[0];
+                if (!numCell.textContent.trim()) {
+                    numCell.textContent = currentNumber++;
+                }
+            });
+        }
+
+        // Add these new functions to your JavaScript
+        function initializeSortableHeaders() {
+            const headers = document.querySelectorAll('th');
+            const sortableColumns = ['Number', 'Responsible', 'Date Raised', 'Status'];
+            
+            headers.forEach((header, index) => {
+                if (sortableColumns.includes(header.textContent)) {
+                    header.classList.add('sort-header');
+                    header.onclick = () => sortTable(index, header);
+                }
+            });
+        }
+
+        function sortTable(columnIndex, header) {
+            // Remove sorted indicator from all headers
+            document.querySelectorAll('.sort-header').forEach(h => h.classList.remove('sorted'));
+            
+            // Add sorted indicator to clicked header
+            header.classList.add('sorted');
+            
+            const allSections = document.querySelectorAll('.section');
+            allSections.forEach(section => {
+                const tbody = section.querySelector('tbody');
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                
+                rows.sort((a, b) => {
+                    let aValue, bValue;
+                    
+                    switch(columnIndex) {
+                        case 0: // Number
+                            aValue = parseInt(a.cells[columnIndex].textContent) || 0;
+                            bValue = parseInt(b.cells[columnIndex].textContent) || 0;
+                            return aValue - bValue;
+                        
+                        case 3: // Responsible
+                            aValue = a.cells[columnIndex].querySelector('select').value;
+                            bValue = b.cells[columnIndex].querySelector('select').value;
+                            return aValue.localeCompare(bValue);
+                        
+                        case 4: // Date Raised
+                            aValue = a.cells[columnIndex].querySelector('input').value || '9999-12-31';
+                            bValue = b.cells[columnIndex].querySelector('input').value || '9999-12-31';
+                            return aValue.localeCompare(bValue);
+                        
+                        case 5: // Status
+                            aValue = a.cells[columnIndex].querySelector('select').value;
+                            bValue = b.cells[columnIndex].querySelector('select').value;
+                            return aValue.localeCompare(bValue);
+                    }
+                });
+                
+                // Re-append sorted rows
+                rows.forEach(row => tbody.appendChild(row));
+            });
+        }
+
+        // Also update all existing status dropdowns in the HTML
+        document.querySelectorAll('select[onchange="updateStatus(this)"]').forEach(select => {
+            Array.from(select.options).forEach(option => {
+                if (option.value.toLowerCase() === 'priority') {
+                    option.textContent = 'PRIORITY';
+                }
+            });
+        });
+
+        // Add these new functions to your JavaScript
+        function addNewSection() {
+            const container = document.getElementById('register-container');
+            const sectionCount = container.querySelectorAll('.section').length + 1;
+            
+            const newSection = document.createElement('div');
+            newSection.className = 'section';
+            newSection.innerHTML = `
+                <div class="section-header">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span class="toggle-btn" onclick="toggleSection(this.parentElement.parentElement.parentElement)">▼</span>
+                        <input type="text" class="section-title" value="Section ${sectionCount}">
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div class="section-stats">
+                            <span class="section-stat section-priority">Priority: 0</span>
+                            <span class="section-stat section-open">Open: 0</span>
+                        </div>
+                        <button class="delete-section-btn" onclick="deleteSection(this)">Delete Section</button>
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Number</th>
+                            <th>Description</th>
+                            <th>Action</th>
+                            <th>Responsible</th>
+                            <th>Date Raised</th>
+                            <th>Status</th>
+                            <th>Move</th>
+                            <th>Notes</th>
+                            <th>Date Closed</th>
+                            <th>Delete</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+                <div class="add-row" onclick="addNewRow(this)">+ Add New Line</div>
+            `;
+            
+            container.appendChild(newSection);
+            initializeSortableHeaders();
+        }
+
+        function deleteSection(button) {
+            const section = button.closest('.section');
+            const sectionTitle = section.querySelector('.section-title').value;
+            const rowCount = section.querySelectorAll('tbody tr').length;
+            
+            if (rowCount > 0) {
+                if (!confirm(`Are you sure you want to delete "${sectionTitle}" and all its ${rowCount} items?`)) {
+                    return;
+                }
+            } else {
+                if (!confirm(`Are you sure you want to delete "${sectionTitle}"?`)) {
+                    return;
+                }
             }
+            
+            section.remove();
+            updateCounts();
         }
     </script>
-
-
 </body></html>
